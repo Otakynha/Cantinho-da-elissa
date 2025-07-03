@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cantinho da elissa - Vendas e Retiradas</title>
+  <style>
+    body {
+  font-family: Arial, sans-serif;
+  background: #E6DAF5;
+  padding: 20px;
+  margin: 0;
+  max-width: 600px;
+  margin: auto;
+}
+h1, h2, h3 {
+  color: #630063;
+}
+input, button {
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 5px;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+button {
+  background-color: #630063;
+  color: white;
+  border: none;
+}
+button:hover {
+  background-color: #246b45;
+}
+ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+li {
+  background: #dfffdf;
+  margin-bottom: 5px;
+  padding: 10px;
+  border-radius: 5px;
+}
+.total {
+  font-weight: bold;
+  font-size: 18px;
+  margin-top: 10px;
+  color: #B325B3;
+}
+.historico {
+  margin-top: 30px;
+  border-top: 2px dashed #630063  ;
+  padding-top: 10px;
+}
+label {
+  display: block;
+  margin-top: 10px;
+}
+#detalhes-dia {
+  margin-top: 20px;
+  display: none;
+  background: #E0BBE4;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #bcd;
+}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Cantinho da elissa</h1>
+
+  <!-- Vendas -->
+  <input type="text" id="item" placeholder="O que foi vendido?">
+  <input type="number" id="valor" placeholder="Valor em R$">
+  <button onclick="adicionarVenda()">Adicionar</button>
+  <button onclick="desfazerUltimaVenda()">Desfazer última venda</button>
+
+  <br>
+
+  <!-- Retiradas -->
+  <input type="text" id="motivo-retirada" placeholder="Motivo da retirada">
+  <input type="number" id="valor-retirada" placeholder="Valor em R$">
+  <button onclick="adicionarRetirada()">Adicionar retirada</button>
+  <button onclick="desfazerUltimaRetirada()">Desfazer última retirada</button>
+
+  <br>
+
+  <label for="data-dia">Data do dia:</label>
+  <input type="date" id="data-dia">
+  <button onclick="salvarDia()">Salvar dia</button>
+
+  <h3>Vendas do Dia</h3>
+  <ul id="lista-vendas"></ul>
+
+  <h3>Retiradas do Dia</h3>
+  <ul id="lista-retiradas"></ul>
+
+  <div class="total">
+    Total bruto: R$ <span id="total-bruto">0.00</span><br>
+    Total retirado: R$ <span id="total-retirado">0.00</span><br>
+    <strong>Total líquido: R$ <span id="total-liquido">0.00</span></strong>
+  </div>
+
+  <div class="historico">
+    <h2>Histórico de Dias Salvos</h2>
+    <button onclick="apagarHistorico()">🗑️ Apagar histórico completo</button>
+    <ul id="historico-dias"></ul>
+
+    <div id="detalhes-dia">
+      <h3>Detalhes do dia <span id="data-detalhe"></span></h3>
+      <ul id="vendas-detalhadas"></ul>
+      <ul id="retiradas-detalhadas"></ul>
+      <div class="total">
+        Total bruto: R$ <span id="det-bruto">0.00</span><br>
+        Total retirado: R$ <span id="det-retirado">0.00</span><br>
+        <strong>Total líquido: R$ <span id="det-liquido">0.00</span></strong>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let vendas = JSON.parse(localStorage.getItem("vendas")) || [];
+    let retiradas = JSON.parse(localStorage.getItem("retiradas")) || [];
+    let historico = JSON.parse(localStorage.getItem("historico")) || [];
+
+    function atualizarTela() {
+      const listaVendas = document.getElementById("lista-vendas");
+      listaVendas.innerHTML = "";
+      let totalVendas = 0;
+      vendas.forEach(v => {
+        const li = document.createElement("li");
+        li.textContent = `${v.item} - R$ ${parseFloat(v.valor).toFixed(2)}`;
+        listaVendas.appendChild(li);
+        totalVendas += parseFloat(v.valor);
+      });
+
+      const listaRetiradas = document.getElementById("lista-retiradas");
+      listaRetiradas.innerHTML = "";
+      let totalRet = 0;
+      retiradas.forEach(r => {
+        const li = document.createElement("li");
+        li.textContent = `${r.motivo} - R$ ${parseFloat(r.valor).toFixed(2)}`;
+        listaRetiradas.appendChild(li);
+        totalRet += parseFloat(r.valor);
+      });
+
+      document.getElementById("total-bruto").textContent = totalVendas.toFixed(2);
+      document.getElementById("total-retirado").textContent = totalRet.toFixed(2);
+      document.getElementById("total-liquido").textContent = (totalVendas - totalRet).toFixed(2);
+
+      localStorage.setItem("vendas", JSON.stringify(vendas));
+      localStorage.setItem("retiradas", JSON.stringify(retiradas));
+    }
+
+    function atualizarHistorico() {
+      const listaHistorico = document.getElementById("historico-dias");
+      listaHistorico.innerHTML = "";
+
+      historico.forEach((dia, index) => {
+        const vendas = dia.vendas || [];
+        const retiradas = dia.retiradas || [];
+        const total = dia.totalLiquido || 0;
+
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>📅 ${dia.data}</strong> - ${vendas.length} vendas, ${retiradas.length} retiradas - Total: R$ ${total.toFixed(2)}`;
+        li.style.cursor = "pointer";
+        li.onclick = () => mostrarDetalhesDia(index);
+        listaHistorico.appendChild(li);
+      });
+
+      localStorage.setItem("historico", JSON.stringify(historico));
+    }
+
+    function mostrarDetalhesDia(index) {
+      const dia = historico[index];
+      const vendas = dia.vendas || [];
+      const retiradas = dia.retiradas || [];
+
+      document.getElementById("data-detalhe").textContent = dia.data;
+
+      const vendasUl = document.getElementById("vendas-detalhadas");
+      vendasUl.innerHTML = "<strong>Vendas:</strong>";
+      vendas.forEach(v => {
+        const li = document.createElement("li");
+        li.textContent = `${v.item} - R$ ${parseFloat(v.valor).toFixed(2)}`;
+        vendasUl.appendChild(li);
+      });
+
+      const retiradasUl = document.getElementById("retiradas-detalhadas");
+      retiradasUl.innerHTML = "<strong>Retiradas:</strong>";
+      retiradas.forEach(r => {
+        const li = document.createElement("li");
+        li.textContent = `${r.motivo} - R$ ${parseFloat(r.valor).toFixed(2)}`;
+        retiradasUl.appendChild(li);
+      });
+
+      let totalBruto = vendas.reduce((s, v) => s + parseFloat(v.valor), 0);
+      let totalRet = retiradas.reduce((s, r) => s + parseFloat(r.valor), 0);
+
+      document.getElementById("det-bruto").textContent = totalBruto.toFixed(2);
+      document.getElementById("det-retirado").textContent = totalRet.toFixed(2);
+      document.getElementById("det-liquido").textContent = (totalBruto - totalRet).toFixed(2);
+
+      document.getElementById("detalhes-dia").style.display = "block";
+    }
+
+    function adicionarVenda() {
+      const item = document.getElementById("item").value;
+      const valor = document.getElementById("valor").value;
+      if (item && valor) {
+        vendas.push({ item, valor });
+        document.getElementById("item").value = "";
+        document.getElementById("valor").value = "";
+        atualizarTela();
+      } else {
+        alert("Preencha todos os campos da venda!");
+      }
+    }
+
+    function adicionarRetirada() {
+      const motivo = document.getElementById("motivo-retirada").value;
+      const valor = document.getElementById("valor-retirada").value;
+      if (motivo && valor) {
+        retiradas.push({ motivo, valor });
+        document.getElementById("motivo-retirada").value = "";
+        document.getElementById("valor-retirada").value = "";
+        atualizarTela();
+      } else {
+        alert("Preencha todos os campos da retirada!");
+      }
+    }
+
+    function desfazerUltimaVenda() {
+      if (vendas.length > 0) {
+        vendas.pop();
+        atualizarTela();
+      }
+    }
+
+    function desfazerUltimaRetirada() {
+      if (retiradas.length > 0) {
+        retiradas.pop();
+        atualizarTela();
+      }
+    }
+
+    function salvarDia() {
+      const dataInput = document.getElementById("data-dia").value;
+      if (!dataInput) return alert("Escolha uma data!");
+
+      if (vendas.length === 0 && retiradas.length === 0) {
+        alert("Nada para salvar!");
+        return;
+      }
+
+      let totalVendas = vendas.reduce((soma, v) => soma + parseFloat(v.valor), 0);
+      let totalRetiradas = retiradas.reduce((soma, r) => soma + parseFloat(r.valor), 0);
+      let totalLiquido = totalVendas - totalRetiradas;
+
+      historico.push({
+        data: formatarData(dataInput),
+        vendas: [...vendas],
+        retiradas: [...retiradas],
+        totalLiquido
+      });
+
+      vendas = [];
+      retiradas = [];
+      document.getElementById("data-dia").value = "";
+      atualizarTela();
+      atualizarHistorico();
+      alert("Dia salvo com sucesso!");
+    }
+
+    function formatarData(dataISO) {
+      const partes = dataISO.split("-");
+      return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    function apagarHistorico() {
+      const confirmar = confirm("Tem certeza que quer apagar todo o histórico?");
+      if (confirmar) {
+        historico = [];
+        localStorage.setItem("historico", JSON.stringify(historico));
+        atualizarHistorico();
+        alert("Histórico apagado!");
+        document.getElementById("detalhes-dia").style.display = "none";
+      }
+    }
+
+    atualizarTela();
+    atualizarHistorico();
+  </script>
+</body>
+</html>
