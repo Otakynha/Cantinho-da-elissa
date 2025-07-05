@@ -3,77 +3,83 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cantinho da elissa - Vendas e Retiradas</title>
+  <title>Cantinho da Elissa - Vendas e Retiradas</title>
   <style>
     body {
-  font-family: Arial, sans-serif;
-  background: #E6DAF5;
-  padding: 20px;
-  margin: 0;
-  max-width: 600px;
-  margin: auto;
-}
-h1, h2, h3 {
-  color: #630063;
-}
-input, button {
-  padding: 10px;
-  margin: 5px 0;
-  border-radius: 5px;
-  font-size: 16px;
-  width: 100%;
-  box-sizing: border-box;
-}
-button {
-  background-color: #630063;
-  color: white;
-  border: none;
-}
-button:hover {
-  background-color: #630063;
-}
-ul {
-  list-style-type: none;
-  padding-left: 0;
-}
-li {
-  background: #E0BBE4;
-  margin-bottom: 5px;
-  padding: 10px;
-  border-radius: 5px;
-}
-.total {
-  font-weight: bold;
-  font-size: 18px;
-  margin-top: 10px;
-  color: #B325B3;
-}
-.historico {
-  margin-top: 30px;
-  border-top: 2px dashed #630063  ;
-  padding-top: 10px;
-}
-label {
-  display: block;
-  margin-top: 10px;
-}
-#detalhes-dia {
-  margin-top: 20px;
-  display: none;
-  background: #E0BBE4;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #bcd;
-}
+      font-family: Arial, sans-serif;
+      background: #E6DAF5;
+      padding: 20px;
+      margin: 0;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1, h2, h3 {
+      color: #630063;
+    }
+    input, select, button {
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 5px;
+      font-size: 16px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #630063;
+      color: white;
+      border: none;
+    }
+    button:hover {
+      background-color: #630063;
+    }
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    li {
+      background: #E0BBE4;
+      margin-bottom: 5px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .total {
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 10px;
+      color: #B325B3;
+    }
+    .historico {
+      margin-top: 30px;
+      border-top: 2px dashed #630063;
+      padding-top: 10px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    #detalhes-dia {
+      margin-top: 20px;
+      display: none;
+      background: #E0BBE4;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #bcd;
+    }
   </style>
 </head>
 <body>
 <main>
-  <h1>Cantinho da elissa</h1>
+  <h1>Cantinho da Elissa</h1>
 
   <!-- Vendas -->
   <input type="text" id="item" placeholder="O que foi vendido?">
   <input type="number" id="valor" placeholder="Valor em R$">
+  <select id="tipo-pagamento">
+    <option value="">Forma de pagamento</option>
+    <option value="Pix">Pix</option>
+    <option value="Cartão">Cartão</option>
+    <option value="Espécie">Espécie</option>
+  </select>
   <button onclick="adicionarVenda()">Adicionar</button>
   <button onclick="desfazerUltimaVenda()">Desfazer última venda</button>
 
@@ -131,7 +137,7 @@ label {
       let totalVendas = 0;
       vendas.forEach(v => {
         const li = document.createElement("li");
-        li.textContent = `${v.item} - R$ ${parseFloat(v.valor).toFixed(2)}`;
+        li.textContent = `${v.item} - R$ ${parseFloat(v.valor).toFixed(2)} (${v.tipo})`;
         listaVendas.appendChild(li);
         totalVendas += parseFloat(v.valor);
       });
@@ -184,7 +190,7 @@ label {
       vendasUl.innerHTML = "<strong>Vendas:</strong>";
       vendas.forEach(v => {
         const li = document.createElement("li");
-        li.textContent = `${v.item} - R$ ${parseFloat(v.valor).toFixed(2)}`;
+        li.textContent = `${v.item} - R$ ${parseFloat(v.valor).toFixed(2)} (${v.tipo})`;
         vendasUl.appendChild(li);
       });
 
@@ -209,10 +215,13 @@ label {
     function adicionarVenda() {
       const item = document.getElementById("item").value;
       const valor = document.getElementById("valor").value;
-      if (item && valor) {
-        vendas.push({ item, valor });
+      const tipo = document.getElementById("tipo-pagamento").value;
+
+      if (item && valor && tipo) {
+        vendas.push({ item, valor, tipo });
         document.getElementById("item").value = "";
         document.getElementById("valor").value = "";
+        document.getElementById("tipo-pagamento").value = "";
         atualizarTela();
       } else {
         alert("Preencha todos os campos da venda!");
@@ -293,5 +302,6 @@ label {
     atualizarTela();
     atualizarHistorico();
   </script>
+</main>
 </body>
 </html>
